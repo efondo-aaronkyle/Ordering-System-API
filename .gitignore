@@ -1,6 +1,6 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+# .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -32,9 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 
-# Environment Variables
-.env
-
 # Logs
 *.log
 
@@ -49,5 +46,10 @@ bin/
 # Maven
 target/
 
-# Lombok
-lombok.config
+# Application local config with secrets (DB credentials, etc.)
+src/main/resources/application-local.properties
+src/main/resources/application.properties
+src/main/resources/application-local.yml
+
+# Eclipse launch configs
+*.launch
