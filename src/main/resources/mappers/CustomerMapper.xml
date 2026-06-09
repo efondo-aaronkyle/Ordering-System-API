@@ -11,23 +11,20 @@
 		<result column = "created_at" property="createdAt"/>
 	</resultMap>
 	
-	<select id="getCustomerById" parameterType="long" resultMap="customerResultMap">
-	SELECT 
-		* FROM customers 
-	WHERE 
-		customer_id = #{id}
+	<select id="getCustomerById" resultMap="customerResultMap">
+		SELECT 
+			* FROM customers 
+		WHERE 
+			customer_id = #{id}
 	</select>
 	
 	<insert id="registerCustomer" useGeneratedKeys="true" keyProperty="id">
-	INSERT INTO customers 
-		(
+		INSERT INTO customers (
 			first_name,
 			last_name,
 			email,
 			phone
-		)
-		VALUES 
-		(
+		) VALUES (
 			#{firstName},
 			#{lastName},
 			#{email},
