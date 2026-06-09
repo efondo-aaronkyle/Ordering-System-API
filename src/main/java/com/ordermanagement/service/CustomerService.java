@@ -4,6 +4,6 @@ import com.ordermanagement.dto.CustomerRequestDTO;
 import com.ordermanagement.dto.CustomerResponseDTO;
 
 public interface CustomerService {
-	public Long registerCustomer(CustomerRequestDTO request);
-	public CustomerResponseDTO getCustomerById(Long id);
+	CustomerResponseDTO registerCustomer(CustomerRequestDTO request);
+	CustomerResponseDTO getCustomerById(Long id);
 }
