@@ -2,4 +2,36 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ordermanagement.repository.CustomerMapper">
 
+	<resultMap id="customerResultMap" type="com.ordermanagement.model.Customer">
+		<id column = "customer_id" property = "id"/>
+		<result column = "first_name" property="firstName"/>
+		<result column = "last_name" property="lastName"/>
+		<result column = "email" property="email"/>
+		<result column = "phone" property="phone"/>
+		<result column = "created_at" property="createdAt"/>
+	</resultMap>
+	
+	<select id="getCustomerById" parameterType="long" resultMap="customerResultMap">
+	SELECT 
+		* FROM customers 
+	WHERE 
+		customer_id = #{id}
+	</select>
+	
+	<insert id="registerCustomer" useGeneratedKeys="true" keyProperty="id">
+	INSERT INTO customers 
+		(
+			first_name,
+			last_name,
+			email,
+			phone
+		)
+		VALUES 
+		(
+			#{firstName},
+			#{lastName},
+			#{email},
+			#{phone}
+		)
+	</insert>
 </mapper>
