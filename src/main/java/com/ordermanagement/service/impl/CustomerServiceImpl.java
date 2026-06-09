@@ -1,5 +1,8 @@
 package com.ordermanagement.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,33 +19,44 @@ public class CustomerServiceImpl implements CustomerService {
 	private CustomerMapper customerMapper; 
 	
 	@Override
-	public Long registerCustomer(CustomerRequestDTO request) {
-		Customer customer = new Customer();
-			customer.setFirstName(request.getFirstName());
-			customer.setLastName(request.getLastName());
-			customer.setEmail(request.getEmail());
-			customer.setPhone(request.getPhone());
-			customer.setCreatedAt(request.getCreatedAt());
+	public CustomerResponseDTO registerCustomer(CustomerRequestDTO request) {
+		if(Objects.isNull(request)) {
+			return null;
+		}
 		
-		Long id = customerMapper.registerCustomer(customer);
-		return customer.getId();
+		Customer customer = new Customer();
+		customer.setFirstName(request.getFirstName());
+		customer.setLastName(request.getLastName());
+		customer.setEmail(request.getEmail());
+		customer.setPhone(request.getPhone());
+		
+		customerMapper.registerCustomer(customer);
+		
+		Customer savedCustomer = customerMapper.getCustomerById(customer.getId());
+		
+		return this.toDTO(savedCustomer);
 	}
 
 	@Override
 	public CustomerResponseDTO getCustomerById(Long id) {
 		Customer customer = customerMapper.getCustomerById(id);
+		
+		if(Objects.isNull(customer)) {
+			return null;
+		}
+		
 		return this.toDTO(customer);
 	}
 	
 	private CustomerResponseDTO toDTO(Customer customer) {
 		CustomerResponseDTO responseDTO = new CustomerResponseDTO(
-				customer.getId(),
-				customer.getFirstName(),
-				customer.getLastName(),
-				customer.getEmail(),
-				customer.getPhone(),
-				customer.getCreatedAt()
-			);
+			customer.getId(),
+			customer.getFirstName(),
+			customer.getLastName(),
+			customer.getEmail(),
+			customer.getPhone(),
+			customer.getCreatedAt()
+		);
 		
 		return responseDTO;
 	}
