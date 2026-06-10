@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.ordermanagement.repository.ReportMapper">
+
+	<select id="getSalesReport" resultType="com.ordermanagement.dto.SalesReportResponseDTO">
+		SELECT 
+			COUNT(order_id) AS totalOrders,
+			COALESCE(SUM(total_price), 0) AS totalRevenue
+		FROM orders
+		WHERE status != 'CANCELLED'
+	</select>
+
+	<select id="getTopSellingProducts" resultType="com.ordermanagement.dto.TopProductResponseDTO">
+		SELECT 
+			p.product_id AS productId,
+			p.name AS productName,
+			SUM(oi.quantity) AS totalQuantitySold,
+			COALESCE(SUM(oi.subtotal), 0) AS totalSales
+		FROM order_items oi
+		INNER JOIN orders o ON oi.order_id = o.order_id
+		INNER JOIN products p ON oi.product_id = p.product_id
+		WHERE o.status != 'CANCELLED'
+		GROUP BY p.product_id, p.name
+		ORDER BY totalQuantitySold DESC
+	</select>
 
 </mapper>
