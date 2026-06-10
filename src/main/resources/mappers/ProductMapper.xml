@@ -56,4 +56,10 @@
 			#{stock}
 		)
 	</insert>
+	
+	<update id="updateProductStock">
+	    UPDATE products
+	    SET stock = #{stock}
+	    WHERE product_id = #{id}
+	</update>
 </mapper>

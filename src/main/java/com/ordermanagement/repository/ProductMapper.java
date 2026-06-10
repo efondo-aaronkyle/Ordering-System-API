@@ -16,4 +16,5 @@ public interface ProductMapper {
 			@Param("offset") Integer offset
 	);
 	Product getProductById(Long id);
+	int updateProductStock(Product product);
 }
