@@ -9,6 +9,8 @@ import com.ordermanagement.dto.TopProductResponseDTO;
 
 @Mapper
 public interface ReportMapper {
+	
 	SalesReportResponseDTO getSalesReport();
 	List<TopProductResponseDTO> getTopSellingProducts();
+	
 }
