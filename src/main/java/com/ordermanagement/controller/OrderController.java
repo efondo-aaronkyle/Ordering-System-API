@@ -1,8 +1,11 @@
 package com.ordermanagement.controller;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,22 +26,42 @@ public class OrderController {
 	private OrderService orderService;
 
 	@PostMapping("/orders")
-	public Long createOrder(@RequestBody OrderRequestDTO request) {
-		return orderService.createOrder(request);
+	public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO request) {
+		OrderResponseDTO createdOrder = orderService.createOrder(request);
+		
+		if (Objects.isNull(createdOrder)) {
+			return ResponseEntity.badRequest().build();
+		}
+		
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
 	}
 
 	@GetMapping("/orders/{id}")
-	public OrderResponseDTO getOrderById(@PathVariable Long id) {
-		return orderService.getOrderById(id);
+	public ResponseEntity<OrderResponseDTO> getOrderById(@PathVariable Long id) {
+		OrderResponseDTO order = orderService.getOrderById(id);
+		
+		if (Objects.isNull(order)) {
+			return ResponseEntity.notFound().build();
+		}
+		
+		return ResponseEntity.ok(order);
 	}
 	
 	@GetMapping("customers/{id}/orders")
-	public List<OrderResponseDTO> getCustomerOrders(@PathVariable Long id) {
-		return orderService.getCustomerOrders(id);
+	public ResponseEntity<List<OrderResponseDTO>> getCustomerOrders(@PathVariable Long id) {
+		List<OrderResponseDTO> orders = orderService.getCustomerOrders(id);
+		
+		return ResponseEntity.ok(orders);
 	}
 
 	@DeleteMapping("/orders/{id}")
-	public boolean cancelOrderById(@PathVariable Long id) {
-		return orderService.cancelOrderById(id);
+	public ResponseEntity<Void> cancelOrderById(@PathVariable Long id) {
+		boolean cancelled = orderService.cancelOrderById(id);
+		
+		if (!cancelled) {
+			return ResponseEntity.badRequest().build();
+		}
+		
+		return ResponseEntity.noContent().build();
 	}
 }
