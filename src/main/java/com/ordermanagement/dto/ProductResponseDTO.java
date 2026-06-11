@@ -1,6 +1,7 @@
 package com.ordermanagement.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,4 +19,5 @@ public class ProductResponseDTO {
 	private String description;
 	private BigDecimal price;
 	private Integer stock;
+	private LocalDateTime createdAt;
 }
