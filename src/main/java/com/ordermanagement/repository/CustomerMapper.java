@@ -7,6 +7,8 @@ import com.ordermanagement.model.Customer;
 @Mapper
 public interface CustomerMapper {
 
-	public Customer getCustomerById(Long id);
-	public Long registerCustomer(Customer customer);
+	Customer getCustomerById(Long id);
+	Customer getCustomerByEmail(String email);
+	Long registerCustomer(Customer customer);
+	
 }

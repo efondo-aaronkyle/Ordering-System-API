@@ -13,9 +13,18 @@
 	
 	<select id="getCustomerById" resultMap="customerResultMap">
 		SELECT 
-			* FROM customers 
+			* 
+		FROM customers 
 		WHERE 
 			customer_id = #{id}
+	</select>
+	
+	<select id="getCustomerByEmail" resultMap="customerResultMap">
+		SELECT
+			*
+		FROM customers
+		WHERE 
+			email = #{email}
 	</select>
 	
 	<insert id="registerCustomer" useGeneratedKeys="true" keyProperty="id">
