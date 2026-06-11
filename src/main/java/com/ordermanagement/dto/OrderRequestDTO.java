@@ -12,7 +12,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderRequestDTO {
-	private Long customerId;
 	
+	private Long customerId;
 	private List<OrderItemRequestDTO> items;
+
 }

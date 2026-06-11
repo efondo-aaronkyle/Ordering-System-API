@@ -8,6 +8,7 @@
 		<result column="description" property="description"/>
         <result column="price" property="price"/>
         <result column="stock" property="stock"/>
+        <result column="created_at" property="createdAt"/>
 	</resultMap>
 	
 	<select id="getProductById" resultMap="productResultMap">
@@ -16,7 +17,8 @@
 			p.name,
 			p.description,
 			p.price,
-			p.stock
+			p.stock,
+			p.created_at
 		FROM products p
 		WHERE p.product_id = #{id}
 	</select>
@@ -27,7 +29,8 @@
 			p.name,
 			p.description,
 			p.price,
-			p.stock
+			p.stock,
+			p.created_at
 		FROM products p
 	</select>
 	
@@ -37,7 +40,8 @@
 			p.name,
 			p.description,
 			p.price,
-			p.stock
+			p.stock,
+			p.created_at
 		FROM products p 
 		LIMIT #{limit}
 		OFFSET #{offset}

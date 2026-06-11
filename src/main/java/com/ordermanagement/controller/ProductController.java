@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,31 +26,37 @@ public class ProductController {
 	private ProductService productService;
 	
 	@GetMapping("")
-	public List<ProductResponseDTO> getAllProducts(@RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size) {
-		if(Objects.nonNull(page) && Objects.nonNull(size)) {
-			return productService.getAllProducts(page, size);
-		}	
+	public ResponseEntity<List<ProductResponseDTO>> getAllProducts(@RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size) {
+		List<ProductResponseDTO> products;
 		
-		return productService.getAllProducts();
+		if(Objects.nonNull(page) && Objects.nonNull(size)) {
+			products = productService.getAllProducts(page, size);
+		} else {
+			products = productService.getAllProducts();
+		}
+		
+		return ResponseEntity.ok(products);
 	}
 	
 	@GetMapping("/{id}")
-	public ProductResponseDTO getProductById(@PathVariable Long id) {
-		if(Objects.nonNull(id)) {
-			return productService.getProductById(id);
+	public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable Long id) {
+		ProductResponseDTO product = productService.getProductById(id);
+		
+		if (Objects.isNull(product)) {
+			return ResponseEntity.notFound().build();
 		}
 		
-		return null;
+		return ResponseEntity.ok(product);
 	}
 	
 	@PostMapping("")
-	public Long createProduct(@RequestBody ProductRequestDTO product) {
-		Long result = null;
+	public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody ProductRequestDTO product) {
+		ProductResponseDTO createdProduct = productService.createProduct(product);
 		
-		if(Objects.nonNull(product)) {
-			result = productService.createProduct(product);
+		if (Objects.isNull(createdProduct)) {
+			return ResponseEntity.badRequest().build();
 		}
 		
-		return result;
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
 	}
 }

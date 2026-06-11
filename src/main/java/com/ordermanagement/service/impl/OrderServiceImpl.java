@@ -35,16 +35,8 @@ public class OrderServiceImpl implements OrderService{
 	
 	@Transactional
 	@Override
-	public Long createOrder(OrderRequestDTO request) {
-		if(Objects.isNull(request)) {
-			return null;
-		}
-		
-		if(Objects.isNull(request.getCustomerId())) {
-			return null;
-		}
-		
-		if(Objects.isNull(request.getItems()) || request.getItems().isEmpty()) {
+	public OrderResponseDTO createOrder(OrderRequestDTO request) {
+		if(isInvalidOrderRequest(request)) {
 			return null;
 		}
 		
@@ -53,60 +45,22 @@ public class OrderServiceImpl implements OrderService{
 		if(Objects.isNull(customer)) {
 			return null;
 		}
-
-		BigDecimal totalPrice = BigDecimal.ZERO;
-
-		for (OrderItemRequestDTO item : request.getItems()) {
-			if(Objects.isNull(item)) {
-				return null;
-			}
-			
-			if(Objects.isNull(item.getProductId())) {
-				return null;
-			}
-			
-			if(Objects.isNull(item.getQuantity()) || item.getQuantity() <= 0) {
-				return null;
-			}
-			
-			Product product = productMapper.getProductById(item.getProductId());
-			
-			if(Objects.isNull(product)) {
-				return null;
-			}
-			
-			if(product.getStock() < item.getQuantity()) {
-				return null;
-			}
-
-			BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-			totalPrice = totalPrice.add(subtotal);
+		
+		BigDecimal totalPrice = calculateTotalPrice(request.getItems());
+		
+		if(Objects.isNull(totalPrice)) {
+			return null;
 		}
 		
 		Order order = new Order();
 		order.setCustomerId(request.getCustomerId());
 		order.setTotalPrice(totalPrice);
 		order.setStatus("PENDING");
-
+		
 		orderMapper.createOrder(order);
-
-		for (OrderItemRequestDTO item : request.getItems()) {
-			Product product = productMapper.getProductById(item.getProductId());
-
-			OrderItem orderItem = new OrderItem();
-			orderItem.setOrderId(order.getId());
-			orderItem.setProductId(item.getProductId());
-			orderItem.setQuantity(item.getQuantity());
-			orderItem.setPrice(product.getPrice());
-			orderItem.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-
-			orderMapper.createOrderItem(orderItem);
-
-			product.setStock(product.getStock() - item.getQuantity());
-			productMapper.updateProductStock(product);
-		}
-
-		return order.getId();
+		saveOrderItemsAndDeductStock(order.getId(), request.getItems());
+		
+		return getOrderById(order.getId());
 	}
 
 	@Override
@@ -115,13 +69,7 @@ public class OrderServiceImpl implements OrderService{
 			return null;
 		}
 		
-		Order order = orderMapper.getOrderById(id);
-		
-		if(Objects.isNull(order)) {
-			return null;
-		}
-
-		return this.toDTO(order);
+		return toDTO(orderMapper.getOrderById(id));
 	}
 
 	@Override
@@ -130,17 +78,14 @@ public class OrderServiceImpl implements OrderService{
 			return List.of();
 		}
 		
-		Customer customer = customerMapper.getCustomerById(customerId);
-		
-		if(Objects.isNull(customer)) {
+		if(Objects.isNull(customerMapper.getCustomerById(customerId))) {
 			return List.of();
 		}
 		
-		List<Order> orders = orderMapper.getCustomerOrders(customerId);
-
-		return orders.stream().map(
-				order -> this.toDTO(order)
-		).toList();
+		return orderMapper.getCustomerOrders(customerId)
+				.stream()
+				.map(this::toDTO)
+				.toList();
 	}
 
 	@Transactional
@@ -149,46 +94,105 @@ public class OrderServiceImpl implements OrderService{
 		if(Objects.isNull(id)) {
 			return false;
 		}
-
+		
 		Order order = orderMapper.getOrderById(id);
 		
-		if(Objects.isNull(order)) {
+		if(order == null || !"PENDING".equals(order.getStatus())) {
 			return false;
 		}
 		
-		if (!"PENDING".equals(order.getStatus())) {
-			return false;
-		}
+		restoreProductStock(id);
 		
-		List<OrderItem> items = orderMapper.getOrderItemsByOrderId(id);
-
-		for (OrderItem item : items) {
+		return orderMapper.cancelOrderById(id) > 0;
+	}
+	
+	private boolean isInvalidOrderRequest(OrderRequestDTO request) {
+		return Objects.isNull(request)
+				|| Objects.isNull(request.getCustomerId())
+				|| Objects.isNull(request.getItems())
+				|| request.getItems().isEmpty();
+	}
+	
+	private boolean isInvalidOrderItem(OrderItemRequestDTO item) {
+		return Objects.isNull(item)
+				|| Objects.isNull(item.getProductId())
+				|| Objects.isNull(item.getQuantity())
+				|| item.getQuantity() <= 0;
+	}
+	
+	private BigDecimal calculateTotalPrice(List<OrderItemRequestDTO> items) {
+		BigDecimal totalPrice = BigDecimal.ZERO;
+		
+		for (OrderItemRequestDTO item : items) {
+			if (isInvalidOrderItem(item)) {
+				return null;
+			}
+			
 			Product product = productMapper.getProductById(item.getProductId());
-
-			if (Objects.nonNull(product)) {
+			
+			if (product == null || product.getStock() < item.getQuantity()) {
+				return null;
+			}
+			
+			BigDecimal subtotal = product.getPrice()
+					.multiply(BigDecimal.valueOf(item.getQuantity()));
+			
+			totalPrice = totalPrice.add(subtotal);
+		}
+		
+		return totalPrice;
+	}
+	
+	private void saveOrderItemsAndDeductStock(Long orderId, List<OrderItemRequestDTO> items) {
+		for (OrderItemRequestDTO item : items) {
+			Product product = productMapper.getProductById(item.getProductId());
+			
+			OrderItem orderItem = new OrderItem();
+			orderItem.setOrderId(orderId);
+			orderItem.setProductId(item.getProductId());
+			orderItem.setQuantity(item.getQuantity());
+			orderItem.setPrice(product.getPrice());
+			orderItem.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+			
+			orderMapper.createOrderItem(orderItem);
+			
+			product.setStock(product.getStock() - item.getQuantity());
+			productMapper.updateProductStock(product);
+		}
+	}
+	
+	private void restoreProductStock(Long orderId) {
+		List<OrderItem> items = orderMapper.getOrderItemsByOrderId(orderId);
+		
+		for(OrderItem item : items) {
+			Product product = productMapper.getProductById(item.getProductId());
+			
+			if(Objects.nonNull(product)) {
 				product.setStock(product.getStock() + item.getQuantity());
 				productMapper.updateProductStock(product);
 			}
 		}
-
-		return orderMapper.cancelOrderById(id) > 0;
 	}
 	
 	private OrderResponseDTO toDTO(Order order) {
+		if (Objects.isNull(order)) {
+			return null;
+		}
+		
 		List<OrderItem> items = orderMapper.getOrderItemsByOrderId(order.getId());
-
-		List<OrderItemResponseDTO> itemDTOs = items.stream().map(
-			item -> new OrderItemResponseDTO(
-				item.getId(),
-				item.getOrderId(),
-				item.getProductId(),
-				item.getQuantity(),
-				item.getPrice(),
-				item.getSubtotal()
-			)
-		).toList();
-
-		OrderResponseDTO responseDTO = new OrderResponseDTO(
+		
+		List<OrderItemResponseDTO> itemDTOs = items.stream()
+				.map(item -> new OrderItemResponseDTO(
+						item.getId(),
+						item.getOrderId(),
+						item.getProductId(),
+						item.getQuantity(),
+						item.getPrice(),
+						item.getSubtotal()
+				))
+				.toList();
+		
+		return new OrderResponseDTO(
 			order.getId(),
 			order.getCustomerId(),
 			order.getTotalPrice(),
@@ -196,7 +200,5 @@ public class OrderServiceImpl implements OrderService{
 			order.getCreatedAt(),
 			itemDTOs
 		);
-
-		return responseDTO;
 	}
 }

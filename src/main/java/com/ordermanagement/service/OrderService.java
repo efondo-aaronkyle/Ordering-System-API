@@ -6,8 +6,10 @@ import com.ordermanagement.dto.OrderRequestDTO;
 import com.ordermanagement.dto.OrderResponseDTO;
 
 public interface OrderService {
-	public Long createOrder(OrderRequestDTO request);
-	public OrderResponseDTO getOrderById(Long id);
-	public List<OrderResponseDTO> getCustomerOrders(Long customerId);
-	public boolean cancelOrderById(Long id);
+	
+	OrderResponseDTO createOrder(OrderRequestDTO request);
+	OrderResponseDTO getOrderById(Long id);
+	List<OrderResponseDTO> getCustomerOrders(Long customerId);
+	boolean cancelOrderById(Long id);
+	
 }
