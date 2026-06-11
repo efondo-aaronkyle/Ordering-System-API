@@ -20,55 +20,45 @@ public class ProductServiceImpl implements ProductService {
 	private ProductMapper productMapper;
 	
 	@Override
-	public Long createProduct(ProductRequestDTO request) {
-		if(Objects.isNull(request)) {
-			return null;
-		}
-		
-		if(Objects.isNull(request.getPrice()) || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-			return null;
-		}
-		
-		if(Objects.isNull(request.getStock()) || request.getStock() < 0) {
+	public ProductResponseDTO createProduct(ProductRequestDTO request) {
+		if(isInvalidProductRequest(request)) {
 			return null;
 		}
 		
 		Product product = new Product();
-		
 		product.setName(request.getName());
 		product.setDescription(request.getDescription());
 		product.setPrice(request.getPrice());
 		product.setStock(request.getStock());
 		
 		productMapper.insertProduct(product);
-		
-		return product.getId();
+
+		return toDTO(productMapper.getProductById(product.getId()));
 			
 	}
 
 	@Override
 	public List<ProductResponseDTO> getAllProducts() {
-		List<Product> products = productMapper.getAllProducts();
-	
-		return products.stream()
+		return productMapper.getAllProducts()
+				.stream()
 				.map(this::toDTO)
 				.toList();
 	}
 
 	@Override
 	public List<ProductResponseDTO> getAllProducts(Integer page, Integer size) {
-		if (Objects.isNull(page) || Objects.isNull(size)) {
+		if(Objects.isNull(page) || Objects.isNull(size)) {
 			return getAllProducts();
 		}
 		
-		if (page < 0 || size <= 0) {
-			return null;
+		if(page < 0 || size <= 0) {
+			return List.of();
 		}
 		
 		Integer offset = page * size;
-		List<Product> products = productMapper.getAllProductsWithPagination(size, offset);
 		
-		return products.stream()
+		return productMapper.getAllProductsWithPagination(size, offset)
+				.stream()
 				.map(this::toDTO)
 				.toList();
 	}
@@ -79,28 +69,29 @@ public class ProductServiceImpl implements ProductService {
 			return null;
 		}
 		
-		Product product = productMapper.getProductById(id);
-		
+		return toDTO(productMapper.getProductById(id));
+	}
+	
+	private boolean isInvalidProductRequest(ProductRequestDTO request) {
+		return Objects.isNull(request)
+			|| Objects.isNull(request.getPrice())
+			|| request.getPrice().compareTo(BigDecimal.ZERO) <= 0
+			|| Objects.isNull(request.getStock())
+			|| request.getStock() < 0;
+	}
+	
+	private ProductResponseDTO toDTO(Product product) {
 		if(Objects.isNull(product)) {
 			return null;
 		}
 		
-		return toDTO(product);
-	}
-	
-	private ProductResponseDTO toDTO(Product product) {
-		if (Objects.isNull(product)) {
-			return null;
-		}
-		
-		ProductResponseDTO responseDTO = new ProductResponseDTO(
+		return new ProductResponseDTO(
 			product.getId(),
 			product.getName(),
 			product.getDescription(),
 			product.getPrice(),
-			product.getStock()
+			product.getStock(),
+			product.getCreatedAt()
 		);
-		
-		return responseDTO;
 	}
 }

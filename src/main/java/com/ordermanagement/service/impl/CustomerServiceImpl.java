@@ -1,6 +1,5 @@
 package com.ordermanagement.service.impl;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,11 @@ public class CustomerServiceImpl implements CustomerService {
 	
 	@Override
 	public CustomerResponseDTO registerCustomer(CustomerRequestDTO request) {
-		if(Objects.isNull(request)) {
+		if(isInvalidCustomerRequest(request)) {
+			return null;
+		}
+		
+		if(customerMapper.getCustomerByEmail(request.getEmail()) != null) {
 			return null;
 		}
 		
@@ -32,24 +35,30 @@ public class CustomerServiceImpl implements CustomerService {
 		
 		customerMapper.registerCustomer(customer);
 		
-		Customer savedCustomer = customerMapper.getCustomerById(customer.getId());
-		
-		return this.toDTO(savedCustomer);
+		return toDTO(customerMapper.getCustomerById(customer.getId()));
 	}
 
 	@Override
 	public CustomerResponseDTO getCustomerById(Long id) {
-		Customer customer = customerMapper.getCustomerById(id);
-		
-		if(Objects.isNull(customer)) {
+		if(Objects.isNull(id)) {
 			return null;
 		}
 		
-		return this.toDTO(customer);
+		return toDTO(customerMapper.getCustomerById(id));
+	}
+	
+	private boolean isInvalidCustomerRequest(CustomerRequestDTO request) {
+		return Objects.isNull(request)
+			|| Objects.isNull(request.getEmail())
+			|| request.getEmail().isBlank();
 	}
 	
 	private CustomerResponseDTO toDTO(Customer customer) {
-		CustomerResponseDTO responseDTO = new CustomerResponseDTO(
+		if (Objects.isNull(customer)) {
+			return null;
+		}
+		
+		return new CustomerResponseDTO(
 			customer.getId(),
 			customer.getFirstName(),
 			customer.getLastName(),
@@ -57,8 +66,5 @@ public class CustomerServiceImpl implements CustomerService {
 			customer.getPhone(),
 			customer.getCreatedAt()
 		);
-		
-		return responseDTO;
 	}
-	
 }
