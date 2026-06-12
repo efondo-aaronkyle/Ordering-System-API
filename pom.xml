@@ -115,6 +115,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>Activity4-[FINALS]</finalName>
 		<plugins>
 			<!-- Spring Boot Maven Plugin -->
 			<plugin>
